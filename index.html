@@ -130,7 +130,7 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
 .fleur-bas{display:block;width:84px;height:auto;margin:18px auto 6px;opacity:.95}
 #intro{position:fixed;inset:0;z-index:100;background:var(--ivory);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;transition:opacity .8s;cursor:pointer}
 #intro.gone{opacity:0;pointer-events:none}
-#intro img{width:min(72vw,340px);height:auto;animation:introIn 1.2s ease both}
+#intro img{width:min(72vw,340px);height:auto;animation:introIn .6s ease both}
 #intro p{font-family:"Great Vibes",cursive;color:#B08D4F;font-size:2.1em;margin:22px 0 0;min-height:2.2em;line-height:1.2}
 #intro .skip{font-family:Jost,sans-serif;font-size:.75em;color:var(--soft);margin-top:18px;letter-spacing:.08em}
 @keyframes introIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
@@ -143,6 +143,10 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
 .liens{padding-left:18px;margin:10px 0 0}
 .liens li{margin:8px 0}
 .liens a{color:var(--burgundy)}
+#v-home .panel a{color:var(--burgundy)}
+body{padding-bottom:34px}
+.version{position:fixed;bottom:6px;left:0;right:0;text-align:center;font-family:Jost,sans-serif;font-size:.72em;letter-spacing:.08em;color:var(--soft);opacity:.75;pointer-events:none;z-index:4}
+#v-home .signature{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.25em;color:var(--burgundy);text-align:right;margin:14px 0 0}
 </style>
 </head>
 <body>
@@ -173,15 +177,11 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
   <section id="v-home">
     <picture class="hero"><source media="(min-width: 720px)" srcset="qcm_assets/splash-landscape-1536x1152.png"><img src="qcm_assets/splash-portrait-864x1152.png" alt="Fleur de lys bordeaux et or, entourée de roses et de perles, sur fond tricolore"></picture>
     <div class="panel">
-      <div class="eyebrow">Bienvenue</div>
-      <h2>Préparer l'examen civique</h2>
-      <p>Ce site vous aide à réviser le programme officiel de l'examen civique : cinq thèmes, des cours, des entraînements et un examen blanc chronométré. Vos erreurs sont retenues, pour que vous puissiez les retravailler.</p>
-      <p>Choisissez une activité. Vous pouvez arrêter à tout moment.</p>
-      <div class="grid" style="margin-top:14px">
-        <button class="tile" onclick="go('cours')"><strong>Cours</strong><span>Les notions essentielles de chaque thème, avec un mini-quiz.</span></button>
-        <button class="tile" onclick="go('train')"><strong>Entraînement</strong><span>1 à 3 thèmes, ou tous les thèmes. 10, 20, 30 ou 40 questions, correction en fin de session.</span></button>
-        <button class="tile" onclick="go('exam')"><strong>Examen blanc</strong><span>40 questions en 45 minutes. Pas de correction pendant le test.</span></button>
-      </div>
+      <h2>Bienvenue !</h2>
+      <p>Depuis 2026, l’examen de citoyenneté est exigé en amont pour certaines demandes de titre de séjour. Cette application vous aide à vous y préparer grâce aux cours, aux entraînements et à un examen blanc.</p>
+      <p>Les questions sont inspirées de la <a href="https://www.immigration.interieur.gouv.fr/documentation/guides-textes-et-brochures/questions-de-connaissance-pour-lexamen-civique-nationalite-francaise.html" target="_blank" rel="noopener">liste officielle des questions</a>, à lire avec le <a href="https://www.immigration.interieur.gouv.fr/documentation/guides-textes-et-brochures/livret-du-citoyen.html" target="_blank" rel="noopener">Livret du citoyen</a>. Ce sont des questions d’entraînement, non officielles.</p>
+      <p>Pour un retour ou une demande de mise à jour, contactez-moi.</p>
+      <p class="signature">Audrey Laury Nkassa</p>
     </div>
     <div class="panel">
       <div class="eyebrow">Liens utiles</div>
@@ -234,6 +234,7 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
 
 <footer>Prototype pédagogique. Questions rédigées à partir du Livret du citoyen, non officielles.</footer>
 <img class="fleur-bas" src="qcm_assets/fleur-de-lys.png" alt="">
+<div class="version">Version 1.3</div>
 
 <script>
 const THEMES = ["Principes et valeurs","Système institutionnel","Droits et devoirs","Histoire, géographie, culture","Vivre dans la société"];
@@ -827,8 +828,8 @@ function typeIntro(i) {
   const el = $("intro-text");
   if (!el) return;
   el.textContent = INTRO_TEXT.slice(0, i);
-  if (i < INTRO_TEXT.length) introTimer = setTimeout(() => typeIntro(i + 1), 70);
-  else introTimer = setTimeout(skipIntro, 2000);
+  if (i < INTRO_TEXT.length) introTimer = setTimeout(() => typeIntro(i + 1), 40);
+  else introTimer = setTimeout(skipIntro, 1000);
 }
 function skipIntro() {
   clearTimeout(introTimer);
@@ -837,7 +838,7 @@ function skipIntro() {
   el.classList.add("gone");
   setTimeout(() => el.remove(), 800);
 }
-setTimeout(() => { if ($("intro")) typeIntro(1); }, 5000);
+setTimeout(() => { if ($("intro")) typeIntro(1); }, 2000);
 
 show("v-home");
 </script>
