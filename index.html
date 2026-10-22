@@ -134,6 +134,15 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
 #intro p{font-family:"Great Vibes",cursive;color:#B08D4F;font-size:2.1em;margin:22px 0 0;min-height:2.2em;line-height:1.2}
 #intro .skip{font-family:Jost,sans-serif;font-size:.75em;color:var(--soft);margin-top:18px;letter-spacing:.08em}
 @keyframes introIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+
+/* ===== Résultats, liens utiles ===== */
+.stats{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-top:12px}
+.stat{background:#fff;border:1px solid var(--sable);border-radius:10px;padding:12px;text-align:center}
+.stat strong{display:block;font-family:"Cormorant Garamond",Georgia,serif;font-size:1.6em;color:var(--burgundy);line-height:1.2}
+.stat span{font-size:.8em;color:var(--soft)}
+.liens{padding-left:18px;margin:10px 0 0}
+.liens li{margin:8px 0}
+.liens a{color:var(--burgundy)}
 </style>
 </head>
 <body>
@@ -157,6 +166,7 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
   <button data-v="cours" onclick="go('cours')">Cours</button>
   <button data-v="train" onclick="go('train')">Entraînement</button>
   <button data-v="exam" onclick="go('exam')">Examen blanc</button>
+  <button data-v="resultats" onclick="go('resultats')">Mes résultats</button>
 </nav>
 
 <main>
@@ -165,12 +175,23 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
     <div class="panel">
       <div class="eyebrow">Bienvenue</div>
       <h2>Préparer l'examen civique</h2>
+      <p>Ce site vous aide à réviser le programme officiel de l'examen civique : cinq thèmes, des cours, des entraînements et un examen blanc chronométré. Vos erreurs sont retenues, pour que vous puissiez les retravailler.</p>
       <p>Choisissez une activité. Vous pouvez arrêter à tout moment.</p>
       <div class="grid" style="margin-top:14px">
         <button class="tile" onclick="go('cours')"><strong>Cours</strong><span>Les notions essentielles de chaque thème, avec un mini-quiz.</span></button>
         <button class="tile" onclick="go('train')"><strong>Entraînement</strong><span>1 à 3 thèmes, ou tous les thèmes. 10, 20, 30 ou 40 questions, correction en fin de session.</span></button>
         <button class="tile" onclick="go('exam')"><strong>Examen blanc</strong><span>40 questions en 45 minutes. Pas de correction pendant le test.</span></button>
       </div>
+    </div>
+    <div class="panel">
+      <div class="eyebrow">Liens utiles</div>
+      <h2>Pour aller plus loin</h2>
+      <ul class="liens">
+        <li><a href="https://immigration.interieur.gouv.fr/" target="_blank" rel="noopener">Livret du citoyen</a> : rubrique « Documentation et ressources » du ministère de l'Intérieur.</li>
+        <li><a href="https://formation-civique.interieur.gouv.fr/" target="_blank" rel="noopener">formation-civique.interieur.gouv.fr</a> : liste officielle des questions de connaissance et fiches par thème.</li>
+        <li><a href="https://www.service-public.gouv.fr/particuliers/vosdroits/F17359" target="_blank" rel="noopener">Carte de résident de longue durée UE</a> : conditions et démarches (service-public.gouv.fr).</li>
+        <li><a href="https://www.service-public.fr/particuliers/vosdroits/N111" target="_blank" rel="noopener">Acquisition de la nationalité française</a> : conditions et démarches (service-public.fr).</li>
+      </ul>
     </div>
   </section>
 
@@ -205,6 +226,10 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
   <section id="v-result" class="hidden">
     <div class="panel" id="result"></div>
   </section>
+
+  <section id="v-resultats" class="hidden">
+    <div id="resultats"></div>
+  </section>
 </main>
 
 <footer>Prototype pédagogique. Questions rédigées à partir du Livret du citoyen, non officielles.</footer>
@@ -213,6 +238,7 @@ footer{font-family:Jost,sans-serif;color:var(--soft)}
 <script>
 const THEMES = ["Principes et valeurs","Système institutionnel","Droits et devoirs","Histoire, géographie, culture","Vivre dans la société"];
 const LEVELS = ["Standard","Avancé","Expert"];
+const NIVEAUX = ["Tous niveaux","Standard","Avancé","Expert"];
 
 const COURS = [
 {
@@ -479,8 +505,19 @@ function majRatees(q, ok) {
   saveRatees(list);
 }
 
+/* ---------- Historique des sessions (suivi) ---------- */
+const HKEY = "examen-civique-historique";
+function getHisto() {
+  try { return JSON.parse(localStorage.getItem(HKEY) || "[]"); } catch (e) { return []; }
+}
+function addHisto(entree) {
+  const h = getHisto();
+  h.push(entree);
+  try { localStorage.setItem(HKEY, JSON.stringify(h.slice(-200))); } catch (e) {}
+}
+
 function show(id) {
-  ["v-home","v-cours","v-setup","v-quiz","v-result"].forEach(s => $(s).classList.toggle("hidden", s !== id));
+  ["v-home","v-cours","v-setup","v-quiz","v-result","v-resultats"].forEach(s => $(s).classList.toggle("hidden", s !== id));
 }
 function setNav(v) {
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
@@ -495,6 +532,7 @@ function go(v) {
   setNav(v);
   if (v === "home") show("v-home");
   else if (v === "cours") openCours();
+  else if (v === "resultats") { renderResultats(); show("v-resultats"); }
   else { renderSetup(v); show("v-setup"); }
 }
 
@@ -569,16 +607,16 @@ function launch(mode) {
     const sel = [...document.querySelectorAll(".th:checked")].map(c => c.value);
     const ord = document.querySelector("input[name=ord]:checked").value;
     const n = parseInt(document.querySelector("input[name=cnt]:checked").value, 10);
-    startEngine({mode:"train", themes: sel.length ? sel : THEMES, order: ord, count: n, level: lvl, back: "train"});
+    startEngine({mode:"train", themes: sel.length ? sel : THEMES, order: ord, count: n, level: lvl, back: "train", lvlLabel: NIVEAUX[lvl]});
   } else {
-    startEngine({mode:"exam", themes: THEMES, order:"random", count:40, level: lvl, back:"exam"});
+    startEngine({mode:"exam", themes: THEMES, order:"random", count:40, level: lvl, back:"exam", lvlLabel: lvl === 0 ? "Mixte" : NIVEAUX[lvl]});
   }
 }
 function startRatees() {
   const ratees = getRatees();
   const list = shuffle(Q.filter(x => ratees.includes(x.q)));
   if (list.length < SEUIL_RATEES) { alert("Il faut au moins " + SEUIL_RATEES + " questions ratées pour lancer cette révision."); return; }
-  startEngine({mode:"train", back:"train", list:list,
+  startEngine({mode:"train", back:"train", list:list, ratees:true, lvlLabel:"Questions ratées",
     note:"Révision de vos questions ratées. Une bonne réponse retire la question de cette liste."});
 }
 
@@ -605,7 +643,8 @@ function buildList(c) {
 function startEngine(c) {
   const b = c.list ? {list: c.list, note: c.note || ""} : buildList(c);
   if (!b.list.length) { alert("Aucune question disponible pour ces choix."); return; }
-  E = {mode:c.mode, back:c.back, k:c.k, themes:c.themes, list:b.list, note:b.note, i:0, ans:[], active:true};
+  E = {mode:c.mode, back:c.back, k:c.k, themes:c.themes, list:b.list, note:b.note, i:0, ans:[], active:true,
+       ratees:!!c.ratees, lvlLabel:c.lvlLabel || ""};
   setNav(c.mode);
   show("v-quiz");
   $("q-timer").textContent = "";
@@ -680,9 +719,19 @@ function finish(timeout) {
   stopEngine();
   const n = E.list.length;
   const ok = E.ans.filter(a => a && a.ok).length;
+  const pct = Math.round(ok / n * 100);
   if (E.mode === "exam") {
     // En examen blanc, la correction se fait à la fin : les ratées sont enregistrées ici.
     E.list.forEach((x, i) => majRatees(x.q, !!(E.ans[i] && E.ans[i].ok)));
+  }
+  if (E.mode === "exam" || E.mode === "train") {
+    addHisto({
+      d: Date.now(),
+      type: E.mode === "exam" ? "exam" : (E.ratees ? "ratees" : "train"),
+      ok: ok, n: n, pct: pct,
+      reussi: E.mode === "exam" ? ok >= 32 : pct >= 80,
+      niveau: E.lvlLabel || ""
+    });
   }
   let h = "";
   if (E.mode === "exam") {
@@ -698,7 +747,6 @@ function finish(timeout) {
         : `<p>Aucune : toutes les questions sont réussies.</p>`) +
       `<p class="meta">Pas de correction pour l'examen blanc. Lancez un entraînement sur les thèmes concernés pour revoir ces notions. Les questions sans réponse comptent comme fausses.</p>`;
   } else {
-    const pct = Math.round(ok / n * 100);
     h += `<div class="eyebrow">${E.mode === "cours" ? "Mini-quiz" : "Entraînement"}</div><h2>Résultat</h2>` +
       `<p style="font-size:1.4em"><strong>${ok} / ${n}</strong> (${pct} %)</p>` +
       `<h3>Corrigé</h3>` +
@@ -721,6 +769,55 @@ function finish(timeout) {
   </div>`;
   $("result").innerHTML = h;
   show("v-result");
+}
+
+/* ---------- Mes résultats : sections à revoir et suivi ---------- */
+function sectionsARevoir() {
+  const rat = getRatees();
+  const lignes = THEMES.map((t, k) => ({t: t, k: k, n: Q.filter(x => x.t === t && rat.includes(x.q)).length}))
+    .filter(x => x.n > 0).sort((a, b) => b.n - a.n);
+  if (!lignes.length) return `<p class="meta">Aucune question ratée pour le moment. Les questions que vous ratez apparaîtront ici, par thème.</p>`;
+  return lignes.map(x => `<div class="review"><strong>${x.t}</strong> · ${x.n} question(s) ratée(s)
+    <div class="row" style="margin-top:6px"><button class="btn ghost" onclick="openCours(${x.k})">Revoir le cours</button></div></div>`).join("");
+}
+function statsDe(liste) {
+  if (!liste.length) return null;
+  const n = liste.length;
+  const reussis = liste.filter(r => r.reussi).length;
+  const pcts = liste.map(r => r.pct);
+  return {n: n, reussis: reussis, echoues: n - reussis, max: Math.max(...pcts), min: Math.min(...pcts)};
+}
+function bloc(titre, liste, legende) {
+  const s = statsDe(liste);
+  if (!s) return `<div class="panel"><div class="eyebrow">${titre}</div><p class="meta">Aucune session enregistrée pour le moment.</p></div>`;
+  return `<div class="panel"><div class="eyebrow">${titre}</div>
+    <div class="grid stats">
+      <div class="stat"><strong>${s.n}</strong><span>effectués</span></div>
+      <div class="stat"><strong>${s.reussis}</strong><span>réussis</span></div>
+      <div class="stat"><strong>${s.echoues}</strong><span>échoués</span></div>
+      <div class="stat"><strong>${s.max} %</strong><span>meilleure note</span></div>
+      <div class="stat"><strong>${s.min} %</strong><span>moins bonne note</span></div>
+    </div>
+    <p class="meta" style="margin-top:12px">${legende}</p></div>`;
+}
+function listeHisto() {
+  const h = getHisto().slice(-10).reverse();
+  if (!h.length) return `<p class="meta">Pas encore de session.</p>`;
+  return h.map(r => {
+    const type = r.type === "exam" ? "Examen blanc" : (r.type === "ratees" ? "Questions ratées" : "Entraînement");
+    const date = new Date(r.d).toLocaleDateString("fr-FR", {day: "numeric", month: "short", year: "numeric"});
+    return `<div class="review"><span class="badge ${r.reussi ? "ok" : "ko"}">${r.reussi ? "Réussi" : "Échoué"}</span>
+      <span class="meta">${date} · ${type}${r.niveau ? " · " + r.niveau : ""}</span>
+      <p><strong>${r.ok} / ${r.n}</strong> (${r.pct} %)</p></div>`;
+  }).join("");
+}
+function renderResultats() {
+  const h = getHisto();
+  $("resultats").innerHTML =
+    `<div class="panel"><div class="eyebrow">Mes résultats</div><h2>Sections à revoir</h2>${sectionsARevoir()}</div>` +
+    bloc("Examen blanc", h.filter(r => r.type === "exam"), "Réussi : au moins 32 bonnes réponses sur 40.") +
+    bloc("Entraînements", h.filter(r => r.type !== "exam"), "Réussi : au moins 80 % de bonnes réponses, soit l'équivalent du seuil de 32/40.") +
+    `<div class="panel"><div class="eyebrow">Historique</div><h2>10 dernières sessions</h2>${listeHisto()}</div>`;
 }
 
 /* ---------- Écran d'intro : fleur 5 s, puis texte lettre par lettre ---------- */
